@@ -12,7 +12,9 @@
  *******************************************************************************/
 package io.openliberty.classloading.classpath.fat;
 
+import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.ByteArrayAsset;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -29,8 +31,16 @@ import io.openliberty.classloading.classpath.test.lib1.Lib1;
 import io.openliberty.classloading.classpath.test.lib12.Lib12;
 import io.openliberty.classloading.classpath.test.lib17.Lib17;
 import io.openliberty.classloading.classpath.test.lib2.Lib2;
+import io.openliberty.classloading.classpath.test.lib3.Lib3;
 import io.openliberty.classloading.classpath.test.rar1.TestResourceAdapter;
 import io.openliberty.classloading.libs.util.CodeSourceUtil;
+import io.openliberty.classloading.trace.fat.AppClassLoaderTraceTest;
+import io.openliberty.classloading.trace.fat.ClassLoaderToStringTraceTest;
+import io.openliberty.classloading.trace.fat.GatewayClassLoaderTraceTest;
+import io.openliberty.classloading.trace.fat.LibraryClassLoadingTraceTest;
+import io.openliberty.classloading.trace.fat.LibraryGenerationToStringTest;
+import io.openliberty.classloading.trace.fat.PackageSpecificTraceTest;
+import io.openliberty.classloading.trace.fat.ParentLastClassLoaderTraceTest;
 import io.openliberty.classloading.trace.lib.TestLibraryClass;
 import io.openliberty.classloading.trace.war.TraceTestServlet;
 import junit.framework.AssertionFailedError;
@@ -43,8 +53,13 @@ import test.bundle.api2.c.API_C2;
 
 @RunWith(Suite.class)
 @SuiteClasses({
-    io.openliberty.classloading.trace.fat.LibraryClassLoadingTraceTest.class,
-    io.openliberty.classloading.trace.fat.ClassLoaderToStringTraceTest.class
+    LibraryClassLoadingTraceTest.class,
+    LibraryGenerationToStringTest.class,
+    ClassLoaderToStringTraceTest.class,
+    AppClassLoaderTraceTest.class,
+    PackageSpecificTraceTest.class,
+    GatewayClassLoaderTraceTest.class,
+    ParentLastClassLoaderTraceTest.class,
 })
 public class FATSuite {
 
@@ -60,8 +75,15 @@ public class FATSuite {
     // Library archive names
     public static final String TEST_LIB1 = "testLib1";
     public static final String TEST_LIB2 = "testLib2";
+    public static final String TEST_LIB3 = "testLib3";
     public static final String TEST_LIB12 = "testLib12";
     public static final String TEST_LIB17 = "testLib17";
+
+    // Bad-class (corrupt bytecode) archive name
+    public static final String TEST_BAD_CLASS = "testBadClass";
+
+    // Fully-qualified class name of the corrupt class entry in testBadClass.jar
+    public static final String BAD_CLASS_NAME = "io.openliberty.classloading.classpath.test.badclass.BadClass";
 
 
     // RAR inner jar archive names
@@ -96,6 +118,8 @@ public class FATSuite {
     // Library archives
     static final JavaArchive TEST_LIB1_JAR;
     static final JavaArchive TEST_LIB2_JAR;
+    /** Contains {@code lib3.properties}; used exclusively as a {@code commonLibraryRef} delegate. */
+    public static final JavaArchive TEST_LIB3_JAR;
     static final JavaArchive TEST_LIB12_JAR;
     static final JavaArchive TEST_LIB17_JAR;
 
@@ -104,6 +128,9 @@ public class FATSuite {
 
     // RAR archives
     static final ResourceAdapterArchive TEST_RAR1_RAR;
+
+    // Corrupt-bytecode archive for CLASS FAIL trace testing
+    static final JavaArchive TEST_BAD_CLASS_JAR;
 
     // Trace test archives
     static final JavaArchive TRACE_TEST_LIB_JAR;
@@ -122,6 +149,7 @@ public class FATSuite {
                                                           API_A2.class.getPackage().getName(), //
                                                           API_B2.class.getPackage().getName(), //
                                                           API_C2.class.getPackage().getName());
+            TEST_LIB3_JAR = ShrinkHelper.buildJavaArchive(TEST_LIB3 + ".jar", Lib3.class.getPackage().getName());
             TEST_LIB12_JAR = ShrinkHelper.buildJavaArchive(TEST_LIB12 + ".jar", Lib12.class.getPackage().getName());
             TEST_LIB17_JAR = ShrinkHelper.buildJavaArchive(TEST_LIB17 + ".jar", Lib17.class.getPackage().getName());
 
@@ -136,6 +164,15 @@ public class FATSuite {
                             .add(TEST_LIB12_JAR, "testlib/", ZipExporter.class);
             ShrinkHelper.addDirectory(TEST_RAR1_RAR, "test-applications/" + TEST_RAR1_RAR.getName() + "/resources/");
 
+
+            // Build the corrupt-bytecode JAR: create an empty JAR and inject a
+            // class entry whose bytes are intentionally invalid so that
+            // AppClassLoader.defineClass() throws ClassFormatError, causing
+            // the "CLASS FAIL" trace line to be emitted.
+            byte[] corruptBytes = "THIS_IS_NOT_A_VALID_CLASS_FILE".getBytes("UTF-8");
+            String badClassEntry = BAD_CLASS_NAME.replace('.', '/') + ".class";
+            TEST_BAD_CLASS_JAR = ShrinkWrap.create(JavaArchive.class, TEST_BAD_CLASS + ".jar")
+                            .add(new ByteArrayAsset(corruptBytes), ArchivePaths.create(badClassEntry));
 
             // Build trace test archives
             TRACE_TEST_LIB_JAR = ShrinkHelper.buildJavaArchive(TRACE_TEST_LIB + ".jar",
@@ -158,6 +195,8 @@ public class FATSuite {
                             .addAsModule(TEST_EJB1_JAR)                 // EJB module for enterprise testing
 
                             .addAsLibrary(TEST_LIB2_JAR)                // Library in lib/ directory
+
+                            .addAsLibrary(TEST_BAD_CLASS_JAR)           // Corrupt-bytecode JAR for CLASS FAIL testing
 
                             .addAsModule(TEST_RAR1_RAR);                // Resource adapter for comprehensive testing
 

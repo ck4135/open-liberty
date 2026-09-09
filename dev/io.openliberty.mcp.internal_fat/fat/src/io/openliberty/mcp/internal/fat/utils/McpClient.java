@@ -168,7 +168,7 @@ public class McpClient extends ExternalResource {
                               "elicitation": {}
                             },
                             "clientInfo": {
-                              "name": "FAT Test Client",
+                              "name": "fat-test-client",
                               "title": "FAT Test Client",
                               "version": "1.0.0"
                             }
@@ -396,6 +396,26 @@ public class McpClient extends ExternalResource {
     public String callMCPAuthorisationErrorExpected(String jsonRequestBody) throws Exception {
         final HttpRequest request = new HttpRequest(server, getMcpPath()).expectCode(403);
         return setupAndRunRequest(request, jsonRequestBody);
+    }
+
+    /**
+     * Calls the MCP endpoint expecting an HTTP 403 Forbidden response and returns a
+     * {@link McpDetailedAuthResponse} containing the status code, {@code Content-Type} header and
+     * response body. Use this variant when the test needs to assert the exact shape of the 403
+     * response (e.g. plain-text body, no JSON-RPC envelope).
+     *
+     * @param jsonRequestBody JSON-RPC request body
+     * @return detailed response including status, content-type header and body
+     * @throws Exception if the request fails unexpectedly
+     */
+    public McpDetailedAuthResponse callMCPAuthorisationErrorDetailed(String jsonRequestBody) throws Exception {
+        final HttpRequest request = new HttpRequest(server, getMcpPath()).expectCode(403);
+        String responseBody = setupAndRunRequest(request, jsonRequestBody);
+        return new McpDetailedAuthResponse(
+                                           request.getResponseCode(),
+                                           request.getResponseHeader("WWW-Authenticate"),
+                                           request.getResponseHeader("Content-Type"),
+                                           responseBody);
     }
 
     public String callMCPwithBasicAuth_AuthorisationErrorExpected(String jsonRequestBody, String user, String password) throws Exception {

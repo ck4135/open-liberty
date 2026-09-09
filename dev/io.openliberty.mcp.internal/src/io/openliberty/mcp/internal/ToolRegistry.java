@@ -25,14 +25,16 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.mcpjava.server.tools.ToolResponse;
+
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
 
 import io.openliberty.mcp.internal.schemas.SchemaRegistry;
 import io.openliberty.mcp.internal.security.SecurityRequirement;
 import io.openliberty.mcp.internal.security.SecurityRequirement.SecurityAnnotation;
+import io.openliberty.mcp.internal.spi.MetaCarrierBuilderImpl;
 import io.openliberty.mcp.tools.ToolManager;
-import io.openliberty.mcp.tools.ToolResponse;
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.json.JsonObject;
 import jakarta.json.bind.Jsonb;
@@ -132,7 +134,7 @@ public class ToolRegistry implements ToolManager {
         return converterRegistry;
     }
 
-    public class ToolDefinitionImpl implements ToolDefinition {
+    public class ToolDefinitionImpl extends MetaCarrierBuilderImpl<ToolDefinitionImpl> implements ToolDefinition {
 
         private final String name;
         private String title;
@@ -191,7 +193,7 @@ public class ToolRegistry implements ToolManager {
         @Override
         public ToolDefinition addArgument(String name, String description, boolean required, Type type, String defaultValue) {
             Objects.requireNonNull(name, "name");
-            ToolArgument arg = new ToolArgument(name, description, required, type, defaultValue);
+            ToolArgument arg = new ToolArgumentImpl(name, description, required, type, defaultValue);
             validateArgument(arg);
             arguments.add(arg);
             return this;
@@ -214,7 +216,7 @@ public class ToolRegistry implements ToolManager {
                     }
                     case CONVERSION_ERROR -> {
                         String msg = Tr.formatMessage(tc, "CWMCM0020E.defaultvalue.conversion.error",
-                                                      this.name, arg.name(), arg.type().getTypeName(), arg.defaultValue(), error.exception());
+                                                      this.name, arg.name(), arg.type().getTypeName(), arg.defaultValue(), error.exception().toString());
                         throw new IllegalArgumentException(msg, error.exception());
                     }
                     // This case should not occur here, but switch is required to cover all cases
@@ -278,7 +280,9 @@ public class ToolRegistry implements ToolManager {
                                                     asyncHandler,
                                                     Optional.empty(), // Method metadata
                                                     securityRequirement,
-                                                    Instant.now());
+                                                    Instant.now(),
+                                                    metadata,
+                                                    Collections.emptyList()); // Validation errors
 
             addTool(newTool);
 
@@ -336,5 +340,16 @@ public class ToolRegistry implements ToolManager {
             }
         }
     }
+
+    /**
+     * Information about a tool argument
+     *
+     * @param name the tool name
+     * @param description the tool description
+     * @param required whether the tool argument is required
+     * @param type the argument type
+     * @param defaultValue the default value
+     */
+    public record ToolArgumentImpl(String name, String description, boolean required, java.lang.reflect.Type type, String defaultValue) implements ToolArgument {}
 
 }

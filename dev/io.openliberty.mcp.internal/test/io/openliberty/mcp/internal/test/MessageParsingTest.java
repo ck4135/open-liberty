@@ -12,6 +12,7 @@ package io.openliberty.mcp.internal.test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.StringReader;
 import java.math.BigDecimal;
@@ -21,30 +22,23 @@ import java.util.Map;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mcpjava.server.tools.Tool;
 
-import io.openliberty.mcp.annotations.Tool;
-import io.openliberty.mcp.internal.Capabilities.ClientCapabilities;
-import io.openliberty.mcp.internal.Capabilities.Elicitation;
-import io.openliberty.mcp.internal.Capabilities.Roots;
-import io.openliberty.mcp.internal.Capabilities.Sampling;
 import io.openliberty.mcp.internal.ConverterRegistry;
 import io.openliberty.mcp.internal.Literals;
 import io.openliberty.mcp.internal.RequestMethod;
 import io.openliberty.mcp.internal.ToolRegistry;
+import io.openliberty.mcp.internal.ToolRegistry.ToolArgumentImpl;
 import io.openliberty.mcp.internal.exceptions.jsonrpc.JSONRPCException;
+import io.openliberty.mcp.internal.requests.ImplementationInfoImpl;
 import io.openliberty.mcp.internal.requests.McpInitializeParams;
-import io.openliberty.mcp.internal.requests.McpInitializeParams.ClientInfo;
 import io.openliberty.mcp.internal.requests.McpNotificationParams;
 import io.openliberty.mcp.internal.requests.McpRequest;
-import io.openliberty.mcp.internal.requests.McpRequestIdDeserializer;
-import io.openliberty.mcp.internal.requests.McpRequestIdSerializer;
 import io.openliberty.mcp.internal.requests.McpToolCallParams;
 import io.openliberty.mcp.internal.testutils.TestUtils;
 import io.openliberty.mcp.tools.ToolManager.ToolArgument;
 import jakarta.json.JsonException;
 import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
-import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.JsonbException;
 
 /**
@@ -56,24 +50,22 @@ public class MessageParsingTest {
 
     @BeforeClass
     public static void setup() {
-        JsonbConfig jsonbConfig = new JsonbConfig().withSerializers(new McpRequestIdSerializer())
-                                                   .withDeserializers(new McpRequestIdDeserializer());
-        jsonb = JsonbBuilder.create(jsonbConfig);
+        jsonb = TestUtils.createJsonb();
         ToolRegistry registry = new ToolRegistry(null, jsonb);
         ToolRegistry.set(registry);
         testConverterRegistry = TestUtils.createTestConverterRegistry();
 
         Tool testTool = Literals.tool("echo", "Echo", "Echos the input");
-        List<ToolArgument> arguments = List.of(new ToolArgument("input", "", true, String.class, ""));
+        List<ToolArgument> arguments = List.of(new ToolArgumentImpl("input", "", true, String.class, ""));
         registry.addTool(ToolMetadataTestUtility.createFrom(testTool, arguments, Collections.emptyList()));
 
         Tool addTestTool = Literals.tool("add", "Add", "Addition calculator");
-        List<ToolArgument> additionArgs = List.of(new ToolArgument("num1", "", true, Integer.class, ""),
-                                                  new ToolArgument("num2", "", true, Integer.class, ""));
+        List<ToolArgument> additionArgs = List.of(new ToolArgumentImpl("num1", "", true, Integer.class, ""),
+                                                  new ToolArgumentImpl("num2", "", true, Integer.class, ""));
         registry.addTool(ToolMetadataTestUtility.createFrom(addTestTool, additionArgs, Collections.emptyList()));
 
         Tool toogleTestTool = Literals.tool("toggle", "Toggle", "Toggle a boolean");
-        List<ToolArgument> booleanArgs = List.of(new ToolArgument("input", "boolean value", true, Boolean.class, ""));
+        List<ToolArgument> booleanArgs = List.of(new ToolArgumentImpl("input", "boolean value", true, Boolean.class, ""));
         registry.addTool(ToolMetadataTestUtility.createFrom(toogleTestTool, booleanArgs, Collections.emptyList()));
     }
 
@@ -262,13 +254,16 @@ public class MessageParsingTest {
         McpInitializeParams params = request.getParams(McpInitializeParams.class, jsonb);
         assertThat(params.getProtocolVersion(), equalTo("2024-11-05"));
         assertThat(params.getCapabilities(),
-                   equalTo(ClientCapabilities.of(new Roots(true),
-                                                 new Sampling(),
-                                                 new Elicitation())));
+                   equalTo(Map.of("roots", Map.of("listChanged", true),
+                                  "sampling", Map.of(),
+                                  "elicitation", Map.of())));
         assertThat(params.getClientInfo(),
-                   equalTo(new ClientInfo("ExampleClient",
-                                          "Example Client Display Name",
-                                          "1.0.0")));
+                   equalTo(new ImplementationInfoImpl(List.of(),
+                                                      "ExampleClient",
+                                                      "Example Client Display Name",
+                                                      "1.0.0",
+                                                      null,
+                                                      null)));
     }
 
     @Test
@@ -323,6 +318,24 @@ public class MessageParsingTest {
         McpNotificationParams notificationRequest = request.getParams(McpNotificationParams.class, jsonb);
         assertThat(notificationRequest.getRequestId().value(), equalTo(new BigDecimal(5)));
         assertThat(notificationRequest.getReason(), equalTo("User requested cancellation"));
+    }
+
+    /**
+     * A notification (no {@code id} field) must parse to a request with {@code id == null}.
+     * This is the precondition for the fix that prevents {@code sendJsonRpcException}
+     * from attempting to build an error response for notifications, which would
+     * throw {@code IllegalArgumentException: id must not be null}.
+     */
+    @Test
+    public void notificationRequestHasNullId() throws Exception {
+        StringReader reader = new StringReader("""
+                        {
+                          "jsonrpc": "2.0",
+                          "method": "notifications/initialized"
+                        }
+                        """);
+        McpRequest request = McpRequest.createValidMCPRequest(reader);
+        assertNull("Notification request must have a null id", request.id());
     }
 
     @Test

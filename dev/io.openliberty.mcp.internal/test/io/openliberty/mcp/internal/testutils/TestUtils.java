@@ -18,11 +18,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.mcpjava.server.tools.Tool;
+
 import io.openliberty.mcp.annotations.DefaultValueConverter;
-import io.openliberty.mcp.annotations.Tool;
 import io.openliberty.mcp.internal.ConverterRegistry;
+import io.openliberty.mcp.internal.McpCdiExtension;
 import io.openliberty.mcp.internal.ToolMetadata;
 import io.openliberty.mcp.internal.requests.BuiltinDefaultValueConverters;
+import jakarta.json.bind.Jsonb;
 
 /**
  *
@@ -80,7 +83,8 @@ public class TestUtils {
         List<ToolMetadata> tools = Arrays.stream(cls.getDeclaredMethods())
                                          .filter(m -> m.isAnnotationPresent(Tool.class))
                                          .filter(m -> m.getName().equals(name))
-                                         .map(m -> ToolMetadata.createFrom(m.getAnnotation(Tool.class), null, new MockAnnotatedMethod<>(m), null, null))
+                                         .map(m -> ToolMetadata.createFrom(m.getAnnotation(Tool.class), MockBean.of(cls), new MockAnnotatedMethod<>(m), null,
+                                                                           TestUtils.createJsonb()))
                                          .collect(Collectors.toList());
         if (tools.size() != 1) {
             throw new RuntimeException("Found " + tools.size() + " tools with name " + name);
@@ -96,5 +100,20 @@ public class TestUtils {
         testConverterRegistry.registerConverters(convertersMap, null);
         return testConverterRegistry;
 
+    }
+
+    /**
+     * Creates a Jsonb object configured the same as it is at runtime
+     *
+     * @return the configured Jsonb object
+     */
+    public static Jsonb createJsonb() {
+        try {
+            Method createJsonb = McpCdiExtension.class.getDeclaredMethod("createJsonb");
+            createJsonb.setAccessible(true);
+            return (Jsonb) createJsonb.invoke(null);
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
     }
 }

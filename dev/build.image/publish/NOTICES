@@ -3,6 +3,7 @@ Copyright 1999-2026 IBM Corporation and others
 This product includes software developed at
 Open Liberty (https://openliberty.io/).
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 TABLE OF CONTENTS
 
 THIS IBM NOTICES FILE CONSISTS OF THE FOLLOWING SECTIONS:
@@ -366,11 +367,11 @@ io.grpc:grpc-context [grpc-context], io.grpc:grpc-core [grpc-core],
 io.grpc:grpc-netty [grpc-netty], io.grpc:grpc-protobuf [grpc-protobuf],
 io.grpc:grpc-protobuf-lite [grpc-protobuf-lite], io.grpc:grpc-stub [grpc-stub],
 io.grpc:grpc-util [grpc-util], jackson-databind, jackson-jr-objects,
-jaeger-client [jaeger-core], jansi, jasper-el, java-dataloader, java-support,
+jaeger-client [jaeger-core], jasper-el, java-dataloader, java-support,
 javax.inject, jdeparser, jose4j, jsp.tld.standard,
 microProfile-fault-tolerance-api [microprofile-fault-tolerance-api],
 micrometer-commons, micrometer-core, micrometer-observation,
-micrometer-registry-prometheus, microprofile-fault-tolerance-api,
+micrometer-registry-prometheus-simpleclient, microprofile-fault-tolerance-api,
 microprofile-metrics-api, microprofile-opentracing-api,
 microprofile-rest-client-api, nekohtml, okhttp, okio [okio-jvm], okio,
 okio [okio-jvm], okio, openapi-path-templating, openapi-server-url-templating,
@@ -756,7 +757,7 @@ asm-analysis (OW2)
 asm-commons (OW2)
 asm-tree (OW2)
 asm-util (OW2)
-dojo (Copyright 2003-2004 Lawrence E. Rosen) (Copyright 2005-2017 JS Foundation) (Copyright 2005-2017 The JS Foundation)
+dojo (Copyright 2003-2004 Lawrence E. Rosen) (Copyright 2005-2018 JS Foundation) (Copyright 2005-2018 The JS Foundation)
 highlight.js (Copyright 2006 Ivan Sagalaev)
 ieee754 (Copyright 2008 Fair Oaks Labs, Inc)
 istack common utility code runtime [istack-commons-runtime] (Copyright 1997-2018 Oracle and/or its affiliates) (Copyright 2017 Oracle and/or its affiliates) (Eclipse Foundation)
@@ -850,7 +851,7 @@ JavaBeans Activation Framework (JAF) [activation] http://java.sun.com/products/j
 activation (https://github.com/javaee/activation/tree/JAF-1_2_0)
 connector (https://mvnrepository.com/artifact/javax.resource/connector-api)
 el (https://github.com/javaee/uel-ri)
-javax.json(https://repo1.maven.org/maven2/javax/json/javax.json-api/)
+javax.json (https://repo1.maven.org/maven2/javax/json/javax.json-api/)
 jaxrpc (https://github.com/javaee/jax-rpc-ri)
 jaxws-api (https://github.com/javaee/jax-ws-spec)
 jcdi (https://repo1.maven.org/maven2/javax/enterprise/cdi-api/1.0/cdi-api-1.0-sources.jar)
@@ -862,7 +863,6 @@ servlet (https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api/4.0.
 servlet.jsp (https://github.com/javaee/servlet-spec)
 servlet.jsp.resources (https://github.com/javaee/servlet-spec)
 servlet.resources (https://github.com/javaee/servlet-spec)
-
 
 
 END OF COMMON DEVELOPMENT AND DISTRIBUTION LICENSE V1 NOTICES AND INFORMATION
@@ -904,7 +904,7 @@ javax.annotation API [javax.annotation-api] http://jcp.org/en/jsr/detail?id=250
 javax.ejb API [javax.ejb-api] https://glassfish.java.net
 javax.enterprise.concurrent-api http://www.oracle.com/
 javax.interceptor API [javax.interceptor-api] https://glassfish.java.net
-javax.json(https://repo1.maven.org/maven2/javax/json/javax.json-api/)
+javax.json (https://repo1.maven.org/maven2/javax/json/javax.json-api/)
 javax.json.bind-api https://javaee.github.io/jsonb-spec
 javax.resource API [javax.resource-api] https://glassfish.java.net
 javax.ws.rs-api http://www.oracle.com/
@@ -1007,7 +1007,7 @@ Region Digraph [org.eclipse.equinox.region] https://github.com/eclipse-equinox/e
 Yasson [yasson] https://projects.eclipse.org/projects/ee4j.yasson
 che-lib7.0.0-rc-4.0 [che-lib] https://github.com/eclipse-che/che-lib.git
 jakarta.enterprise.concurrent-api https://github.com/eclipse-ee4j/concurrency-api
-jakarta.json(https://repo.maven.apache.org/maven2/jakarta/json/jakarta.json-api/2.0.2)
+jakarta.json (https://repo.maven.apache.org/maven2/jakarta/json/jakarta.json-api/)
 jakarta.resource API [jakarta.resource-api] https://github.com/eclipse-ee4j/jca-api
 jakarta.transaction API [jakarta.transaction-api] https://projects.eclipse.org/projects/ee4j.jta
 jakarta.ws.rs-api https://github.com/eclipse-ee4j/jaxrs-api
@@ -1018,6 +1018,7 @@ javax.ws.rs-api [jakarta.ws.rs-api] https://github.com/eclipse-ee4j/jaxrs-api
 javax.ws.rs-api https://www.eclipse.org/org/foundation/
 jboss-jakarta-ejb-api_spec [jboss-ejb-api_3.2_spec] https://github.com/eclipse-ee4j/ejb-api
 org.eclipse.persistence.jpa (https://github.com/jakartaee/persistence)
+org.eclipse.persistence.jpa.jpql (http://www.eclipse.org/eclipselink)
 org.eclipse.yasson [yasson] https://projects.eclipse.org/projects/ee4j.yasson
 
 
@@ -1189,7 +1190,7 @@ hasown (Copyright Jordan Harband and contributors)
 hast-util-parse-selector (Copyright 2016 Titus Wormer <tituswormer@gmail.com>)
 hastscript (Copyright Titus Wormer) (Copyright Titus Wormer <tituswormer@gmail.com>)
 http2-wrapper (Copyright 2018 Szymon Marczak)
-immutable (Copyright 2014 Facebook, Inc)
+immutable (Copyright 2014 Lee Byron and other contributors)
 imurmurhash (Copyright 2013 Gary Court, Jens Taylor)
 invariant (Copyright 2013 Facebook, Inc)
 is-alphabetical (Copyright 2016 Titus Wormer <tituswormer@gmail.com>)
@@ -1235,19 +1236,17 @@ ms (Copyright 2020 Vercel, Inc)
 neotraverse (Copyright 2010 James Halliday and contributors)
 node-abort-controller (Copyright 2019 Steve Faulkner)
 node-addon-api (Copyright 2017 Node.js API collaborators" https://github.com/nodejs/node-addon-api#collaborators)
-node-domexception (Copyright 2021 Jimmy WÃ¤rting)
-node-fetch-commonjs (Copyright 2016-2020 Node Fetch Team)
 node-gyp-build (Copyright 2017 Mathias Buus)
 normalize-url (Copyright Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com))
 object-assign (Copyright Sindre Sorhus) (Copyright Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com))
 one-time (Copyright 2015 Unshift.io, Arnout Kazemier,  the Contributors)
 p-cancelable (Copyright Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com))
 parse-entities (Copyright Titus Wormer) (Copyright Titus Wormer <mailto:tituswormer@gmail.com>)
-picomatch (Copyright 2017 Jon Schlinkert) (Copyright 2017 Jon Schlinkert" (https://github.com/jonschlinkert))
+picomatch (Copyright 2017 Jon Schlinkert) (Copyright 2017 Jon Schlinkert" https://github.com/jonschlinkert)
 possible-typed-array-names (Copyright 2024 Jordan Harband)
 process (Copyright 2013 Roman Shtylman <shtylman@gmail.com>)
 prop-types (Copyright 2013 Facebook, Inc)
-property-information (Copyright Facebook, Inc.) (Copyright Titus Wormer) (Copyright Titus Wormer <mailto:tituswormer@gmail.com>)
+property-information (Copyright Facebook, Inc) (Copyright Titus Wormer) (Copyright Titus Wormer <mailto:tituswormer@gmail.com>)
 pump (Copyright 2014 Mathias Buus)
 querystringify (Copyright 2015 Unshift.io, Arnout Kazemier,  the Contributors)
 queue-microtask (Copyright Feross Aboukhadijeh)
@@ -1315,7 +1314,6 @@ url-parse (Copyright 2015 Unshift.io, Arnout Kazemier,  the Contributors)
 use-sync-external-store (Copyright Meta Platforms, Inc. and affiliates)
 util-deprecate (Copyright 2014 Nathan Rajlich "nathan@tootallnate.net" (mailto:nathan@tootallnate.net)) (Copyright 2014 Nathan Rajlich <nathan@tootallnate.net>)
 vinyl (Copyright 2013-2022 Blaine Bublitz <blaine.bublitz@gmail.com> and Eric Schoffstall)
-web-streams-polyfill (Copyright 2016 Diwank Singh Tomer) (Copyright 2024 Mattias Buelens)
 web-tree-sitter (Copyright 2018-2024 Max Brunsfeld)
 which-typed-array (Copyright 2015 Jordan Harband)
 winston (Copyright 2010 Charlie Robbins)
